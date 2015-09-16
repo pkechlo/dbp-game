@@ -12,18 +12,6 @@ class Ship < ActiveRecord::Base
   after_initialize :create_stations, if: :new_record?
   after_initialize :init, if: :new_record?
 
-  def sum_level
-    sum=0
-    ShipsStation.where(:ship_id => self.id).each do |station|
-      sum+=station.level
-    end  
-    return sum - ShipsStation.find_by(ship_id: self.id, station_id: 2007).level
-  end
-
-  def max_station_level
-    i = 100 + 10 * ShipsStation.find_by(ship_id: self.id, station_id: 2007).level
-    return i
-  end
   def check_condition(conditions)
     condition_split = conditions.split(",")
     condition_split.each do |condition|
@@ -115,7 +103,12 @@ class Ship < ActiveRecord::Base
           #self.fuel=0
         end
         if station.station_id == 2015 #burn_generator
-          self.fuel-= get_collect_difference(station.level, station.station_id, last_checked, station.energy_usage)
+          current_fuel = self.fuel - get_collect_difference(station.level, station.station_id, last_checked, station.energy_usage)
+          if (current_fuel > 0)
+            self.fuel = current_fuel
+          else
+            self.fuel = 0
+          end
         end
 	  end
     self.lastChecked = Time.now.getutc
